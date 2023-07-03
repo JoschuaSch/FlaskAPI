@@ -75,23 +75,29 @@ def handle_books():
 @app.route('/api/books/<int:book_id>', methods=['PUT'])
 def handle_book(book_id):
     """Handle PUT requests for /api/books/<book_id>."""
+    app.logger.info(f'PUT request received for /api/books/{book_id}')
     book = find_book_by_id(book_id)
     if book is None:
+        app.logger.error(f'Book not found: {book_id}')
         return '', 404
     new_data = request.get_json()
     for key in new_data:
         if key in book:
             book[key] = new_data[key]
+    app.logger.info(f'Book updated successfully: {book}')
     return jsonify(book)
 
 
 @app.route('/api/books/<int:book_id>', methods=['DELETE'])
 def delete_book(book_id):
     """Handle DELETE requests for /api/books/<book_id>."""
+    app.logger.info(f'DELETE request received for /api/books/{book_id}')
     book = find_book_by_id(book_id)
     if book is None:
+        app.logger.error(f'Book not found: {book_id}')
         return '', 404
     books.remove(book)
+    app.logger.info(f'Book deleted successfully: {book}')
     return jsonify(book)
 
 
