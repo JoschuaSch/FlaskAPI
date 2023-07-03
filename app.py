@@ -1,9 +1,12 @@
 from flask import Flask, jsonify, request
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+import logging
 
 app = Flask(__name__)
 limiter = Limiter(app, key_func=get_remote_address)
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 books = [
     {"id": 1, "title": "The Great Gatsby", "author": "F. Scott Fitzgerald"},
@@ -30,6 +33,7 @@ books = [
 
 
 def find_book_by_id(book_id):
+    """Find a book in the list of books by its ID."""
     for book in books:
         if book["id"] == book_id:
             return book
@@ -37,14 +41,17 @@ def find_book_by_id(book_id):
 
 
 def validate_book_data(data):
+    """Validate the book data."""
     if "title" not in data or "author" not in data:
         return False
     return True
 
 
 @app.route('/api/books', methods=['GET', 'POST'])
-@limiter.limit("2/minute")
+@limiter.limit("5/minute")
 def handle_books():
+    """Handle GET and POST requests for /api/books."""
+    app.logger.info('GET request received for /api/books')
     if request.method == 'GET':
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 10))
@@ -67,6 +74,7 @@ def handle_books():
 
 @app.route('/api/books/<int:book_id>', methods=['PUT'])
 def handle_book(book_id):
+    """Handle PUT requests for /api/books/<book_id>."""
     book = find_book_by_id(book_id)
     if book is None:
         return '', 404
@@ -79,6 +87,7 @@ def handle_book(book_id):
 
 @app.route('/api/books/<int:book_id>', methods=['DELETE'])
 def delete_book(book_id):
+    """Handle DELETE requests for /api/books/<book_id>."""
     book = find_book_by_id(book_id)
     if book is None:
         return '', 404
@@ -88,11 +97,13 @@ def delete_book(book_id):
 
 @app.errorhandler(404)
 def not_found_error(_):
+    """Handle 404 errors."""
     return jsonify({"error": "Not Found"}), 404
 
 
 @app.errorhandler(405)
 def method_not_allowed_error(_):
+    """Handle 405 errors."""
     return jsonify({"error": "Method Not Allowed"}), 405
 
 
